@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: psgateway
+
+server:
+  port: 8888
+
+psregistry:
+  servers: http://localhost:8484
