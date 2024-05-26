@@ -6,36 +6,43 @@ import cn.pengshao.rpc.core.meta.InstanceMeta;
 import cn.pengshao.rpc.core.meta.ServiceMeta;
 import cn.pengshao.rpc.core.registry.RegistryCenter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.server.ServerRequest;
-import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebHandler;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * Description: gateway handler
+ * Description: gateway web handler
  *
  * @Author: yezp
- * @date 2024/5/23 22:42
+ * @date 2024/5/26 22:14
  */
-@Component
-public class GatewayHandler {
+@Component("gatewayWebHandler")
+public class GatewayWebHandler implements WebHandler {
 
     @Autowired
     RegistryCenter rc;
 
     LoadBalancer<InstanceMeta> loadBalancer = new RoundLoadBalancer<>();
 
-    // curl -H "Content-Type: application/json" -X POST
-    // -d '{"service":"cn.pengshao.rpc.demo.api.UserService", "methodSign":"findById_Integer", "args":[100]}'
-    // http://localhost:8888/gw/cn.pengshao.rpc.demo.api.UserService
-
-    public Mono<ServerResponse> handle(ServerRequest request) {
+    /**
+     * webHandle
+     *
+     * @param exchange 有点类似于 上下文
+     * @return result
+     */
+    @Override
+    public Mono<Void> handle(ServerWebExchange exchange) {
+        System.out.println("===>>>> PS Gateway web handler ...");
         // 1、通过请求路径获取服务名
-        String service = request.path().substring(4);
+        String service = exchange.getRequest().getPath().value().substring(4);
         ServiceMeta serviceMeta = ServiceMeta.builder()
                 .name(service)
                 .app("psrpc")
@@ -52,28 +59,24 @@ public class GatewayHandler {
         String url = instanceMeta.toUrl();
 
         // 4、拿到请求的报文
-        Mono<String> reqestMono = request.bodyToMono(String.class);
-        return reqestMono.flatMap(body -> invokeFromRegistry(body, url));
-    }
+        Flux<DataBuffer> requestBody = exchange.getRequest().getBody();
 
-    private Mono<? extends ServerResponse> invokeFromRegistry(String body, String url) {
         // 5、通过 webClient 发送请求
         WebClient webClient = WebClient.create(url);
         Mono<ResponseEntity<String>> entity = webClient.post()
                 .header("Content-Type", "application/json")
-                .bodyValue(body)
+                .body(requestBody, DataBuffer.class)
                 .retrieve()
                 .toEntity(String.class);
 
         // 6、通过entity获取响应报文
         Mono<String> responseBody = entity.map(ResponseEntity::getBody);
-        // subscribe()方法是触发实际操作的关键，没有调用subscribe()，WebClient不会发送请求，也不会拿到返回的结果。
-        responseBody.subscribe(source -> System.out.println("responseBody : " + source));
 
         // 7、组装并返回响应报文
-        return ServerResponse.ok()
-                .header("Content-Type", "application/json")
-                .header("ps.gw.version", "v1.0.0")
-                .body(responseBody, String.class);
+        exchange.getResponse().getHeaders().add("Content-Type", "application/json");
+        exchange.getResponse().getHeaders().add("ps.gw.version", "v1.0.0");
+        return responseBody.flatMap(body -> exchange.getResponse()
+                        .writeWith(Mono.just(exchange.getResponse().bufferFactory()
+                                .wrap(body.getBytes(StandardCharsets.UTF_8)))));
     }
 }
