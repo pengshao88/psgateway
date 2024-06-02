@@ -1,4 +1,4 @@
-package cn.pengshao.gateway.filter;
+package cn.pengshao.gateway.web.filter;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
