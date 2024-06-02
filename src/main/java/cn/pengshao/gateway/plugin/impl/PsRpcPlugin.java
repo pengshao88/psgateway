@@ -77,8 +77,8 @@ public class PsRpcPlugin extends AbstractGatewayPlugin {
         exchange.getResponse().getHeaders().add("ps.gw.version", "v1.0.0");
         exchange.getResponse().getHeaders().add("ps.gw.plugin", getName());
         return responseBody.flatMap(body -> exchange.getResponse()
-                .writeWith(Mono.just(exchange.getResponse().bufferFactory()
-                        .wrap(body.getBytes(StandardCharsets.UTF_8)))));
+                .writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(body.getBytes()))))
+                .then(chain.handle(exchange));
     }
 
     @Override
