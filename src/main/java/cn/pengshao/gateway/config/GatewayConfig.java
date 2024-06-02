@@ -11,6 +11,8 @@ import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping;
 
 import java.util.Properties;
 
+import static cn.pengshao.gateway.plugin.GatewayPlugin.GATEWAY_PREFIX;
+
 /**
  * Description:gateway config
  *
@@ -30,7 +32,7 @@ public class GatewayConfig {
         return args -> {
             SimpleUrlHandlerMapping handlerMapping = context.getBean(SimpleUrlHandlerMapping.class);
             Properties mappings = new Properties();
-            mappings.put("/gw/**", "gatewayWebHandler");
+            mappings.put(GATEWAY_PREFIX + "/**", "gatewayWebHandler");
             handlerMapping.setMappings(mappings);
             handlerMapping.initApplicationContext();
             System.out.println("psrpc gateway start.");
