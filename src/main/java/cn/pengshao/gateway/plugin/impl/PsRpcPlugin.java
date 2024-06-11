@@ -42,7 +42,7 @@ public class PsRpcPlugin extends AbstractGatewayPlugin {
     public Mono<Void> doHandle(ServerWebExchange exchange, GatewayPluginChain chain) {
         log.info("=======>>>>>>> [PSRpcPlugin] ...");
         // 1、通过请求路径获取服务名
-        String service = exchange.getRequest().getPath().value().substring(4);
+        String service = exchange.getRequest().getPath().value().substring(PREFIX.length());
         ServiceMeta serviceMeta = ServiceMeta.builder()
                 .name(service)
                 .app("psrpc")

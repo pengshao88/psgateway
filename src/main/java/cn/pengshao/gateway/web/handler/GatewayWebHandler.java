@@ -2,6 +2,7 @@ package cn.pengshao.gateway.web.handler;
 
 import cn.pengshao.gateway.filter.GatewayFilter;
 import cn.pengshao.gateway.plugin.GatewayPlugin;
+import cn.pengshao.gateway.plugin.impl.DefaultGatewayPluginChain;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -42,6 +43,6 @@ public class GatewayWebHandler implements WebHandler {
         for (GatewayFilter filter : filters) {
             filter.filter(exchange);
         }
-        return ;
+        return new DefaultGatewayPluginChain(plugins).handle(exchange);
     }
 }
