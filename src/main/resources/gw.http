@@ -1,0 +1,7 @@
+# psrpc POST
+http://localhost:8888/gw/psrpc/cn.pengshao.rpc.demo.api.UserService
+{"service":"cn.pengshao.rpc.demo.api.UserService", "methodSign":"findById_Integer", "args":[100]}
+
+# direct POST
+http://localhost:8888/gw/direct/cn.pengshao.rpc.demo.api.UserService?backend=http://localhost:8081/psrpc
+{"service":"cn.pengshao.rpc.demo.api.UserService", "methodSign":"findById_Integer", "args":[100]}
